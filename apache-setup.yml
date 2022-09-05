@@ -1,0 +1,34 @@
+---
+- hosts: all
+  name: Install the web server and start it
+  become: yes
+  vars:
+    httpd_packages:
+      - httpd
+
+  tasks:
+    - name: Install the apache web server
+      yum:
+        name: "{{ httpd_packages }}"
+        state: present
+    
+    - name: Open the firewalld http port
+      firewalld:
+        port: 80/tcp
+        permanent: true
+        state: enabled
+      notify: restart firewalld service
+    
+    - name: Generate a basic homepage from jinja2 template
+      copy:
+        src: alias.conf
+        dest: /var/www/html/index.html
+        force: yes
+
+  handlers:
+    - name: restart firewalld service
+      service:
+        name: firewalld
+        state: restarted
+        enabled: yes
+
